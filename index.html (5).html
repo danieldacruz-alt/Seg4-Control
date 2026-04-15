@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEG4 — Dashboard Supervisor</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F7F6F2;--card:#fff;--border:#E2DFD6;--text:#1A1916;--muted:#8C8878;
+  --orange:#e8510a;--green:#2D6A4F;--gbg:#D8F3DC;--red:#C1121F;--rbg:#FFE5E7;
+  --amber:#B45309;--abg:#FEF3C7;--blue:#1E40AF;--bbg:#DBEAFE;
+  --sidebar:#1a1a2e;--r:12px}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:170px;min-height:100vh;background:var(--sidebar);display:flex;flex-direction:column;padding:1.25rem 0;position:fixed;top:0;left:0;bottom:0}
+.sb-brand{padding:0 1.25rem 1.5rem}
+.sb-brand .logo{font-size:22px;font-weight:800;color:var(--orange);letter-spacing:1px}
+.sb-brand .sub{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:1px}
+.sb-btn{display:block;width:100%;text-align:left;padding:10px 1.25rem;font-size:13px;font-weight:500;color:#aaa;cursor:pointer;border:none;border-left:3px solid transparent;background:transparent;font-family:inherit;transition:all .15s}
+.sb-btn:hover{color:#fff;background:rgba(255,255,255,.05)}
+.sb-btn.active{color:#fff;border-left-color:var(--orange);background:rgba(255,255,255,.07)}
+.sb-bottom{padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,.1);margin-top:auto}
+.sb-bottom label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.sb-bottom select{width:100%;background:#2a2a3e;border:1px solid #444;color:#fff;padding:6px 8px;border-radius:6px;font-size:12px;font-family:inherit}
+.main{margin-left:170px;flex:1;padding:2rem}
+.page{display:none}.page.active{display:block}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem}
+.pt{font-size:28px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.ps{font-size:13px;color:var(--muted);margin-top:4px}
+.btn-p{background:var(--orange);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-p:hover{background:#c94008}
+.btn-s{background:#fff;color:var(--text);border:1px solid var(--border);padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px}
+.btn-s:hover{background:var(--bg)}
+.status-bar{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:1.5rem;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.sdot{width:8px;height:8px;border-radius:50%;background:#27ae60;flex-shrink:0}
+.sdot.warn{background:var(--amber)}
+.sdot.err{background:var(--red)}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.25rem}
+.kpi-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem}
+.kpi-val{font-size:28px;font-weight:800}
+.kpi-val.or{color:var(--orange)}.kpi-val.gr{color:#27ae60}.kpi-val.pu{color:#9b59b6}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.setor-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.sc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.25rem}
+.sc-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center}
+.sc-faltas{font-size:28px;font-weight:800;color:var(--orange)}
+.sc-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.abs-pct{font-size:12px;color:var(--muted);text-align:right}
+.abs-pct span{font-size:15px;font-weight:700;color:#27ae60;display:block}
+.tc{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.tc-hdr{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg)}
+td{padding:14px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#faf9f6}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase}
+.tag-lo{background:#fdeee6;color:var(--orange)}
+.tag-log{background:#f5eef8;color:#9b59b6}
+.tag-ftp{background:#eaf2fb;color:var(--blue)}
+.tag-hub{background:#eafaf1;color:#27ae60}
+.tag-falta{background:var(--rbg);color:var(--red)}
+.tag-folga{background:var(--abg);color:var(--amber)}
+.tag-atestado{background:var(--bbg);color:var(--blue)}
+.tag-outro{background:var(--bg);color:var(--muted)}
+.tag-lider{background:#e2e3ff;color:#3730a3}
+.filters{display:flex;gap:10px;margin-bottom:1rem}
+.filters select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;font-family:inherit}
+.btn-del{background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:inherit}
+.btn-del:hover{background:#fee2e2}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:2rem;width:460px;max-width:95vw}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:1.5rem}
+.fg{margin-bottom:1rem}
+.fg label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--orange)}
+.fg-row{display:flex;gap:12px}
+.fg-row .fg{flex:1}
+.mf{display:flex;justify-content:flex-end;gap:10px;margin-top:1.5rem}
+.btn-cancel{background:#fff;border:1px solid var(--border);padding:9px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
+.today-alert{background:var(--rbg);border:1px solid rgba(193,18,31,.2);border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;font-size:13px;color:var(--red);display:none}
+.today-alert.on{display:flex;align-items:center;gap:10px}
+.today-ok{background:var(--gbg);border:1px solid rgba(45,106,79,.2);border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;font-size:13px;color:var(--green);display:none}
+.today-ok.on{display:flex;align-items:center;gap:10px}
+.spinner{text-align:center;padding:20px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">KAVAK</div>
+    <div class="sub">Controle SEG4</div>
+  </div>
+  <button class="sb-btn active" id="nav-dash" onclick="goPage('dash')">&#9741; Dashboard</button>
+  <button class="sb-btn" id="nav-ocorr" onclick="goPage('ocorr')">&#9888; Ocorrencias</button>
+  <button class="sb-btn" id="nav-mots" onclick="goPage('mots')">&#128100; Motoristas</button>
+  <div class="sb-bottom">
+    <label>Mes de Referencia</label>
+    <select id="mes-sel" onchange="onMesChange()">
+      <option value="2026-04">Abril de 2026</option>
+      <option value="2026-05">Maio de 2026</option>
+      <option value="2026-06">Junho de 2026</option>
+      <option value="2026-07">Julho de 2026</option>
+    </select>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dash">
+    <div class="ph">
+      <div><div class="pt">Dashboard</div><div class="ps" id="ds-sub">Abril de 2026</div></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-s" onclick="sincronizar()">&#8635; Sincronizar</button>
+        <button class="btn-p" onclick="abrirModal()">+ Nova Ocorrencia</button>
+      </div>
+    </div>
+    <div class="status-bar"><div class="sdot" id="sdot"></div><span id="stext">Conectando...</span></div>
+    <div class="today-alert" id="today-alert">&#9888; O lider ainda nao registrou a presenca hoje!</div>
+    <div class="today-ok" id="today-ok">&#9989; Lider ja registrou a presenca hoje.</div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-lbl">Motoristas</div><div class="kpi-val">23</div><div class="kpi-sub">23 posicoes</div></div>
+      <div class="kpi"><div class="kpi-lbl">Faltas no mes</div><div class="kpi-val or" id="kf">0</div><div class="kpi-sub" id="kf-sub">0 atestado(s)</div></div>
+      <div class="kpi"><div class="kpi-lbl">Desconto Total</div><div class="kpi-val or" id="kd">R$ 0,00</div><div class="kpi-sub">por faltas</div></div>
+      <div class="kpi"><div class="kpi-lbl">Registros do mes</div><div class="kpi-val pu" id="kr">0</div><div class="kpi-sub">dias registrados</div></div>
+      <div class="kpi"><div class="kpi-lbl">Previsao SEG4</div><div class="kpi-val gr" id="kp">R$ 148.650,47</div><div class="kpi-sub">Base: R$ 148.650,47</div></div>
+    </div>
+    <div class="setor-grid">
+      <div class="sc"><div class="sc-name" style="color:var(--orange)">LOG EXTERNA<span class="abs-pct">Abs<span id="abs-lo">0%</span></span></div><div class="sc-faltas" id="f-lo">0</div><div class="sc-sub">faltas · 7 motoristas</div></div>
+      <div class="sc"><div class="sc-name" style="color:#9b59b6">LOG GUINCHO<span class="abs-pct">Abs<span id="abs-log">0%</span></span></div><div class="sc-faltas" id="f-log">0</div><div class="sc-sub">faltas · 2 motoristas</div></div>
+      <div class="sc"><div class="sc-name" style="color:var(--blue)">FTP<span class="abs-pct">Abs<span id="abs-ftp">0%</span></span></div><div class="sc-faltas" id="f-ftp">0</div><div class="sc-sub">faltas · 7 motoristas</div></div>
+      <div class="sc"><div class="sc-name" style="color:#27ae60">HUB OPS<span class="abs-pct">Abs<span id="abs-hub">0%</span></span></div><div class="sc-faltas" id="f-hub">0</div><div class="sc-sub">faltas · 7 motoristas</div></div>
+    </div>
+    <div class="tc">
+      <div class="tc-hdr">Ocorrencias recentes</div>
+      <table><thead><tr><th>Data</th><th>Motorista</th><th>Setor</th><th>Tipo</th><th>Origem</th><th>Obs</th><th></th></tr></thead>
+      <tbody id="tb-dash"></tbody></table>
+    </div>
+  </div>
+
+  <!-- OCORRENCIAS -->
+  <div class="page" id="page-ocorr">
+    <div class="ph">
+      <div><div class="pt">Ocorrencias</div><div class="ps">Registro do mes</div></div>
+      <button class="btn-p" onclick="abrirModal()">+ Lancar</button>
+    </div>
+    <div class="filters">
+      <select id="f-setor" onchange="renderOcorr()">
+        <option value="">Todos setores</option>
+        <option value="LOG EXTERNA">LOG EXTERNA</option>
+        <option value="LOG EXTERNA - GUINCHO">LOG EXTERNA - GUINCHO</option>
+        <option value="FTP">FTP</option>
+        <option value="HUB OPS">HUB OPS</option>
+      </select>
+      <select id="f-tipo" onchange="renderOcorr()">
+        <option value="">Todos tipos</option>
+        <option value="Falta">Falta</option>
+        <option value="Folga">Folga</option>
+        <option value="Atestado">Atestado</option>
+      </select>
+    </div>
+    <div class="tc"><table><thead><tr><th>Data</th><th>Motorista</th><th>Setor</th><th>Tipo</th><th>Desconto</th><th>Origem</th><th>Obs</th><th></th></tr></thead>
+    <tbody id="tb-ocorr"></tbody></table></div>
+  </div>
+
+  <!-- MOTORISTAS -->
+  <div class="page" id="page-mots">
+    <div class="ph"><div><div class="pt">Motoristas</div><div class="ps">23 colaboradores ativos</div></div></div>
+    <div id="mots-list"></div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Lancar Ocorrencia</h2>
+    <div class="fg-row">
+      <div class="fg"><label>Data</label><input type="date" id="oc-data"/></div>
+      <div class="fg"><label>Motorista</label><select id="oc-mot"></select></div>
+    </div>
+    <div class="fg"><label>Tipo</label>
+      <select id="oc-tipo">
+        <option value="Falta">Falta</option>
+        <option value="Folga">Folga</option>
+        <option value="Atestado">Atestado</option>
+      </select>
+    </div>
+    <div class="fg"><label>Observacao (opcional)</label><input type="text" id="oc-obs" placeholder="Opcional..."/></div>
+    <div class="mf">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-p" onclick="salvarOcorr()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = "$2a$10$4xpgwCDBwtfpRMCVvHrxduVGEK1n9afJeVypFAVHbsQON15c6C/ku";
+var BIN_ID = null;
+var BIN_NAME = "seg4-registros";
+var MES = "2026-04";
+var CONTRATO = 148650.47;
+
+var SETOR_MAP = {
+  "DOUGLAS RODRIGUES DE MELO": "LOG EXTERNA",
+  "EMERSON DA COSTA PARRA": "LOG EXTERNA",
+  "JEFERSON LUIS DE SOUZA": "LOG EXTERNA",
+  "RAQUEL DOS SANTOS AVELINO": "LOG EXTERNA",
+  "ROGERIO DE JESUS OLIVEIRA": "LOG EXTERNA",
+  "RONE MARQUES DA SILVA": "LOG EXTERNA",
+  "RAPHAEL PINHEIRO SOUTO DE ALMEIDA": "LOG EXTERNA - GUINCHO",
+  "ELIEL VLADIMIR DOS SANTOS": "FTP",
+  "GABRIEL HENRIQUE GONCALVES": "FTP",
+  "MARCIEL PIA DA SILVA": "FTP",
+  "RAFAEL SANTOS DIAS": "FTP",
+  "SERGIO AVELINO MACHADO": "FTP",
+  "WESLEY FERREIRA CARNEIRO DA SILVA": "FTP",
+  "ADRIANO MARCOS SANTOS AURELIANO": "HUB OPS",
+  "EVERITON SANTOS NASCIMENTO": "HUB OPS",
+  "GABRIEL BORGES SOUTO": "HUB OPS",
+  "MAURICIO SANTOS DAMASCENO": "HUB OPS",
+  "REINALDO VICENTE DE ALCANTARA": "HUB OPS"
+};
+
+var SALARIOS = {
+  "LOG EXTERNA": 6357.24,
+  "LOG EXTERNA - GUINCHO": 6357.24,
+  "FTP": 5725.26,
+  "HUB OPS": 5725.26
+};
+
+var SETOR_SIZES = {"LOG EXTERNA":7,"LOG EXTERNA - GUINCHO":2,"FTP":7,"HUB OPS":7};
+var ocorrencias_extra = [];
+
+function getMes(){ return document.getElementById("mes-sel").value; }
+
+function fmtMoney(v){
+  var s = v.toFixed(2).replace(".",",");
+  return "R$ "+s.replace(/(\d)(?=(\d{3})+,)/g,"$1.");
+}
+
+function fmtDate(d){
+  if(!d)return"";
+  var p=d.split("-"); return p[2]+"/"+p[1]+"/"+p[0];
+}
+
+function getMesLabel(m){
+  var ms=["Janeiro","Fevereiro","Marco","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var p=m.split("-"); return ms[parseInt(p[1])-1]+" de "+p[0];
+}
+
+// -- JSONBIN ---------------------------------------------------
+function findOrCreateBin(cb) {
+  fetch("https://api.jsonbin.io/v3/b", {
+    headers: {"X-Master-Key": API}
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(bins){
+    var found = null;
+    if(bins.result && bins.result.length > 0) {
+      found = bins.result[0].id;
+    }
+    if(found) { BIN_ID = found; cb(); }
+    else { createBin(cb); }
+  })
+  .catch(function(){ createBin(cb); });
+}
+
+function createBin(cb) {
+  fetch("https://api.jsonbin.io/v3/b", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Master-Key": API,
+      "X-Bin-Name": BIN_NAME,
+      "X-Bin-Private": "false"
+    },
+    body: JSON.stringify({registros:[], ocorrencias:[]})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ BIN_ID = d.metadata.id; cb(); })
+  .catch(function(){ setStatus("err","Erro de conexao"); });
+}
+
+function readBin(cb) {
+  if(!BIN_ID) return cb({registros:[],ocorrencias:[]});
+  fetch("https://api.jsonbin.io/v3/b/"+BIN_ID+"/latest", {
+    headers: {"X-Master-Key": API}
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ cb(d.record||{registros:[],ocorrencias:[]}); })
+  .catch(function(){ cb({registros:[],ocorrencias:[]}); });
+}
+
+function writeBin(data, cb) {
+  fetch("https://api.jsonbin.io/v3/b/"+BIN_ID, {
+    method: "PUT",
+    headers: {"Content-Type":"application/json","X-Master-Key":API},
+    body: JSON.stringify(data)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(){ if(cb) cb(); })
+  .catch(function(){ alert("Erro ao salvar."); });
+}
+
+function setStatus(type, msg) {
+  var dot = document.getElementById("sdot");
+  var txt = document.getElementById("stext");
+  var now = new Date();
+  if(type==="ok") { dot.className="sdot"; txt.textContent="Conectado - "+now.toLocaleDateString("pt-BR")+", "+now.toLocaleTimeString("pt-BR"); }
+  else if(type==="loading") { dot.className="sdot warn"; txt.textContent="Carregando..."; }
+  else { dot.className="sdot err"; txt.textContent=msg||"Erro de conexao"; }
+}
+
+// -- NAV -------------------------------------------------------
+function goPage(p) {
+  document.querySelectorAll(".page").forEach(function(el){ el.classList.remove("active"); });
+  document.querySelectorAll(".sb-btn").forEach(function(el){ el.classList.remove("active"); });
+  document.getElementById("page-"+p).classList.add("active");
+  document.getElementById("nav-"+p).classList.add("active");
+  if(p==="dash") renderDash();
+  if(p==="ocorr") renderOcorr();
+  if(p==="mots") renderMots();
+}
+
+function onMesChange() {
+  MES = getMes();
+  document.getElementById("ds-sub").textContent = getMesLabel(MES);
+  renderDash();
+}
+
+function sincronizar() {
+  setStatus("loading");
+  renderDash();
+}
+
+// -- CALCULA OCORRENCIAS DO MES --------------------------------
+function getOcorrenciasMes(data) {
+  var regs = (data.registros||[]);
+  var extra = (data.ocorrencias||[]);
+  var mes = getMes();
+  var result = [];
+
+  // From registros (lider)
+  regs.forEach(function(r){
+    if(!r.data || !r.data.startsWith(mes)) return;
+    (r.ausencias||[]).forEach(function(a){
+      if(!a.motorista) return;
+      result.push({
+        id: "r_"+r.data+"_"+a.motorista,
+        data: r.data,
+        motorista: a.motorista,
+        setor: SETOR_MAP[a.motorista] || "",
+        tipo: a.tipo || "Falta",
+        origem: "Lider",
+        obs: r.obs || ""
+      });
+    });
+  });
+
+  // From extra (supervisor)
+  extra.forEach(function(o){
+    if(!o.data || !o.data.startsWith(mes)) return;
+    result.push(o);
+  });
+
+  return result.sort(function(a,b){ return b.data.localeCompare(a.data); });
+}
+
+// -- DASHBOARD -------------------------------------------------
+function renderDash() {
+  setStatus("loading");
+  readBin(function(data){
+    setStatus("ok");
+    var ocs = getOcorrenciasMes(data);
+    var hoje = new Date().toISOString().split("T")[0];
+    var regs = data.registros || [];
+
+    // Today status
+    var todayReg = regs.find(function(r){ return r.data === hoje; });
+    document.getElementById("today-alert").className = "today-alert"+((!todayReg)?" on":"");
+    document.getElementById("today-ok").className = "today-ok"+((todayReg)?" on":"");
+
+    var faltas = ocs.filter(function(o){ return o.tipo==="Falta"; });
+    var atestados = ocs.filter(function(o){ return o.tipo==="Atestado"; });
+    var desc = 0;
+    faltas.forEach(function(o){
+      var sal = SALARIOS[o.setor] || 5725.26;
+      desc += sal / 26;
+    });
+    var regsMes = regs.filter(function(r){ return r.data && r.data.startsWith(getMes()); }).length;
+
+    document.getElementById("kf").textContent = faltas.length;
+    document.getElementById("kf-sub").textContent = atestados.length+" atestado(s)";
+    document.getElementById("kd").textContent = fmtMoney(desc);
+    document.getElementById("kr").textContent = regsMes;
+    document.getElementById("kp").textContent = fmtMoney(CONTRATO - desc);
+
+    var setores = ["LOG EXTERNA","LOG EXTERNA - GUINCHO","FTP","HUB OPS"];
+    var ids = {"LOG EXTERNA":"lo","LOG EXTERNA - GUINCHO":"log","FTP":"ftp","HUB OPS":"hub"};
+    var dias = 26;
+    setores.forEach(function(s){
+      var sf = ocs.filter(function(o){ return o.setor===s && o.tipo==="Falta"; }).length;
+      var sz = SETOR_SIZES[s] || 1;
+      var abs = ((sf/(sz*dias))*100).toFixed(1)+"%";
+      document.getElementById("f-"+ids[s]).textContent = sf;
+      document.getElementById("abs-"+ids[s]).textContent = abs;
+    });
+
+    var tb = document.getElementById("tb-dash");
+    if(!ocs.length){ tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">Nenhuma ocorrencia no mes</td></tr>'; return; }
+    tb.innerHTML = ocs.slice(0,10).map(function(o){
+      return '<tr><td>'+fmtDate(o.data)+'</td><td style="font-weight:600">'+o.motorista+'</td><td>'+setorTag(o.setor)+'</td><td>'+tipoTag(o.tipo)+'</td><td><span class="tag tag-lider">'+o.origem.toUpperCase()+'</span></td><td style="color:var(--muted)">'+(o.obs||"&mdash;")+'</td><td><button class="btn-del" onclick="delOcorr(''+o.id+'')">&#10005;</button></td></tr>';
+    }).join("");
+  });
+}
+
+function setorTag(s){
+  var cls=""; var txt=s;
+  if(s==="LOG EXTERNA")cls="tag-lo";
+  else if(s==="LOG EXTERNA - GUINCHO"){cls="tag-log";txt="LOG GUINCHO";}
+  else if(s==="FTP")cls="tag-ftp";
+  else if(s==="HUB OPS")cls="tag-hub";
+  return '<span class="tag '+cls+'">'+txt+'</span>';
+}
+
+function tipoTag(t){
+  var cls="";
+  if(t==="Falta")cls="tag-falta";
+  else if(t==="Folga")cls="tag-folga";
+  else if(t==="Atestado")cls="tag-atestado";
+  else cls="tag-outro";
+  return '<span class="tag '+cls+'">'+t.toUpperCase()+'</span>';
+}
+
+// -- OCORRENCIAS -----------------------------------------------
+function renderOcorr() {
+  readBin(function(data){
+    var ocs = getOcorrenciasMes(data);
+    var fs = document.getElementById("f-setor").value;
+    var ft = document.getElementById("f-tipo").value;
+    if(fs) ocs = ocs.filter(function(o){ return o.setor===fs; });
+    if(ft) ocs = ocs.filter(function(o){ return o.tipo===ft; });
+    var tb = document.getElementById("tb-ocorr");
+    if(!ocs.length){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Nenhuma ocorrencia</td></tr>'; return; }
+    tb.innerHTML = ocs.map(function(o){
+      var sal = SALARIOS[o.setor] || 5725.26;
+      var desc = o.tipo==="Falta" ? fmtMoney(sal/26) : "&mdash;";
+      return '<tr><td>'+fmtDate(o.data)+'</td><td style="font-weight:600">'+o.motorista+'</td><td>'+setorTag(o.setor)+'</td><td>'+tipoTag(o.tipo)+'</td><td>'+desc+'</td><td><span class="tag tag-lider">'+o.origem.toUpperCase()+'</span></td><td style="color:var(--muted)">'+(o.obs||"&mdash;")+'</td><td><button class="btn-del" onclick="delOcorr(''+o.id+'')">&#10005;</button></td></tr>';
+    }).join("");
+  });
+}
+
+// -- MOTORISTAS ------------------------------------------------
+function renderMots() {
+  readBin(function(data){
+    var ocs = getOcorrenciasMes(data);
+    var setores = {
+      "LOG EXTERNA": ["DOUGLAS RODRIGUES DE MELO","EMERSON DA COSTA PARRA","JEFERSON LUIS DE SOUZA","RAQUEL DOS SANTOS AVELINO","ROGERIO DE JESUS OLIVEIRA","RONE MARQUES DA SILVA"],
+      "LOG EXTERNA - GUINCHO": ["RAPHAEL PINHEIRO SOUTO DE ALMEIDA"],
+      "FTP": ["ELIEL VLADIMIR DOS SANTOS","GABRIEL HENRIQUE GONCALVES","MARCIEL PIA DA SILVA","RAFAEL SANTOS DIAS","SERGIO AVELINO MACHADO","WESLEY FERREIRA CARNEIRO DA SILVA"],
+      "HUB OPS": ["ADRIANO MARCOS SANTOS AURELIANO","EVERITON SANTOS NASCIMENTO","GABRIEL BORGES SOUTO","MAURICIO SANTOS DAMASCENO","REINALDO VICENTE DE ALCANTARA"]
+    };
+    var colors = {"LOG EXTERNA":"tag-lo","LOG EXTERNA - GUINCHO":"tag-log","FTP":"tag-ftp","HUB OPS":"tag-hub"};
+    var html = "";
+    for(var s in setores){
+      var mots = setores[s];
+      html += '<div style="margin-bottom:2rem"><div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem"><span class="tag '+colors[s]+'">'+s+'</span><span style="font-size:12px;color:var(--muted)">'+mots.length+' motoristas</span></div>';
+      html += '<div class="tc"><table><thead><tr><th>Nome</th><th>Salario</th><th>Faltas</th><th>Desconto</th></tr></thead><tbody>';
+      mots.forEach(function(m){
+        var faltas = ocs.filter(function(o){ return o.motorista===m && o.tipo==="Falta"; }).length;
+        var sal = SALARIOS[s] || 5725.26;
+        var desc = faltas>0 ? fmtMoney(faltas*(sal/26)) : "&mdash;";
+        html += '<tr><td style="font-weight:600">'+m+'</td><td>'+fmtMoney(sal)+'</td><td style="color:'+(faltas>0?"var(--orange)":"#27ae60")+'">'+faltas+'</td><td>'+desc+'</td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+    document.getElementById("mots-list").innerHTML = html;
+  });
+}
+
+// -- MODAL -----------------------------------------------------
+function abrirModal() {
+  var sel = document.getElementById("oc-mot");
+  sel.innerHTML = "";
+  var todos = Object.keys(SETOR_MAP).sort();
+  todos.forEach(function(n){
+    var op = document.createElement("option");
+    op.value = n; op.textContent = n;
+    sel.appendChild(op);
+  });
+  document.getElementById("oc-data").value = new Date().toISOString().split("T")[0];
+  document.getElementById("oc-obs").value = "";
+  document.getElementById("modal").classList.add("open");
+}
+
+function fecharModal(){ document.getElementById("modal").classList.remove("open"); }
+
+function salvarOcorr() {
+  var d = document.getElementById("oc-data").value;
+  var m = document.getElementById("oc-mot").value;
+  var t = document.getElementById("oc-tipo").value;
+  var obs = document.getElementById("oc-obs").value.trim();
+  if(!d||!m){ alert("Preencha os campos!"); return; }
+  readBin(function(data){
+    if(!data.ocorrencias) data.ocorrencias = [];
+    data.ocorrencias.push({
+      id: "ex_"+Date.now(),
+      data: d,
+      motorista: m,
+      setor: SETOR_MAP[m] || "",
+      tipo: t,
+      origem: "Supervisor",
+      obs: obs
+    });
+    writeBin(data, function(){
+      fecharModal();
+      renderDash();
+    });
+  });
+}
+
+function delOcorr(id) {
+  if(!confirm("Remover esta ocorrencia?")) return;
+  if(id.startsWith("r_")) { alert("Ocorrencias do lider nao podem ser removidas aqui. Peca para o lider corrigir."); return; }
+  readBin(function(data){
+    if(!data.ocorrencias) return;
+    data.ocorrencias = data.ocorrencias.filter(function(o){ return o.id !== id; });
+    writeBin(data, function(){ renderDash(); renderOcorr(); });
+  });
+}
+
+document.getElementById("modal").addEventListener("click", function(e){ if(e.target===this) fecharModal(); });
+
+// -- INIT ------------------------------------------------------
+findOrCreateBin(function(){ renderDash(); });
+</script>
+</body>
+</html>
